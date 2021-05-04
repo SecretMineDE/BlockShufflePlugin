@@ -1,6 +1,6 @@
 parameters:
   rounds: 5
-  roundTime: 6000
+  roundTime: 12000
   giveFood: 16
 block-list:
   - ACACIA_FENCE

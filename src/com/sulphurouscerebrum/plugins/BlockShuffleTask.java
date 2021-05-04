@@ -3,7 +3,6 @@ package com.sulphurouscerebrum.plugins;
 import org.bukkit.*;
 import org.bukkit.block.BlockFace;
 import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarFlag;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
@@ -45,7 +44,7 @@ public class BlockShuffleTask extends BukkitRunnable {
     private void updateBossBar() {
         double progress = 0.0;
         if (currentRoundTime > 0)
-            progress = 1.0 - (float)currentRoundTime / (float)this.plugin.params.getRoundTime();
+            progress = 1.0 - (float) currentRoundTime / (float) this.plugin.params.getRoundTime();
         bossBar.setProgress(progress);
     }
 
@@ -77,7 +76,8 @@ public class BlockShuffleTask extends BukkitRunnable {
                         boolean hasFound = helper.checkPlayer(player);
                         if (hasFound) {
                             this.successfulPlayers++;
-                            player.notifyFound();
+                            //player.notifyFound();
+                            helper.updateBoard(player);
                         }
                     }
                 }
@@ -144,21 +144,25 @@ class BlockShuffleTaskHelper {
         return this.plugin.params.getAvailableBlocks().get(randomNumber);
     }
 
+    public void updateBoard(BlockShufflePlayer player) {
+        createBoard(player);
+    }
+
     public void createBoard(BlockShufflePlayer player) {
         Bukkit.getLogger().info("Creating Scoreboard for " + player.getName());
         Scoreboard scoreboard = Objects.requireNonNull(Bukkit.getScoreboardManager()).getNewScoreboard();
         Objective obj = scoreboard.registerNewObjective("BSObjective", "dummy", "Block Shuffle");
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        Score s1 = obj.getScore("ROUND : " + this.currentRound + "/" + this.plugin.params.getNoOfRounds());
+        Score s1 = obj.getScore("Round: " + this.currentRound + "/" + this.plugin.params.getNoOfRounds());
         s1.setScore(5);
         Score s2 = obj.getScore("");
         s2.setScore(4);
-        Score s3 = obj.getScore("YOUR SCORE : " + player.getScore());
+        Score s3 = obj.getScore("Your score: " + player.getScore());
         s3.setScore(3);
         Score s4 = obj.getScore("");
         s4.setScore(2);
-        Score s5 = obj.getScore("YOUR BLOCK : " + player.getBlockToBeFound());
+        Score s5 = obj.getScore("Your block: " + player.getBlockToBeFound());
         s5.setScore(1);
 
         player.player.setScoreboard(scoreboard);
@@ -175,6 +179,7 @@ class BlockShuffleTaskHelper {
             player.setScore(player.getScore() + 1);
             broadcastSound(Sound.BLOCK_END_PORTAL_SPAWN);
             player.player.playSound(player.player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+            Bukkit.broadcastMessage(ChatColor.GREEN + player.getName() + " has found their block!");
             return true;
         }
 
@@ -195,14 +200,16 @@ class BlockShuffleTaskHelper {
 
         for (BlockShufflePlayer player : this.plugin.params.getAvailablePlayers()) {
             Player ply = Bukkit.getPlayer(player.getName());
+            if (ply == null)
+                continue;
+
             scores.put(player.getScore(), player.getName());
             ply.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
             titleSender.sendTitle(ply, 10, 30, 10, ChatColor.RED + "" + "Game Over", "");
         }
 
-        Iterator iterator = scores.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry mapEntry = (Map.Entry) iterator.next();
+        for (Map.Entry<Integer, String> integerStringEntry : scores.entrySet()) {
+            Map.Entry mapEntry = (Map.Entry) integerStringEntry;
             String message = mapEntry.getValue() + " : " + mapEntry.getKey();
             Bukkit.broadcastMessage(message);
         }
