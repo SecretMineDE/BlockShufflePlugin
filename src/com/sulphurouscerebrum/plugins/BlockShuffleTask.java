@@ -1,10 +1,11 @@
 package com.sulphurouscerebrum.plugins;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.block.BlockFace;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarFlag;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -25,6 +26,7 @@ public class BlockShuffleTask extends BukkitRunnable {
     int successfulPlayers;
     int counter;
     SendTitle titleSender;
+    static BossBar bossBar;
 
     public BlockShuffleTask(Main plugin) {
         this.logger = Bukkit.getLogger();
@@ -36,10 +38,21 @@ public class BlockShuffleTask extends BukkitRunnable {
         this.counter = 100;
         this.titleSender = new SendTitle();
         this.helper = new BlockShuffleTaskHelper(this.plugin, this.currentRound);
+        if (bossBar == null)
+            bossBar = Bukkit.getServer().createBossBar("BlockShuffle", BarColor.BLUE, BarStyle.SOLID);
+    }
+
+    private void updateBossBar() {
+        double progress = 0.0;
+        if (currentRoundTime > 0)
+            progress = 1.0 - (float)currentRoundTime / (float)this.plugin.params.getRoundTime();
+        bossBar.setProgress(progress);
     }
 
     @Override
     public void run() {
+        for (BlockShufflePlayer player : this.plugin.params.getAvailablePlayers())
+            bossBar.addPlayer(player.player);
 
         if (counter > 0) {
             if (counter % 20 == 0) {
@@ -56,6 +69,8 @@ public class BlockShuffleTask extends BukkitRunnable {
                 this.hasRoundEnded = false;
                 this.successfulPlayers = 0;
                 helper.startRound(this.currentRound);
+                this.bossBar.setVisible(true);
+                updateBossBar();
             } else {
                 for (BlockShufflePlayer player : this.plugin.params.getAvailablePlayers()) {
                     if (!player.getHasFoundBlock()) {
@@ -67,7 +82,11 @@ public class BlockShuffleTask extends BukkitRunnable {
                     }
                 }
 
+                String bossBarTitle = this.successfulPlayers + " / " + this.plugin.params.getAvailablePlayers().size() + " players finished";
+                bossBar.setTitle(bossBarTitle);
+
                 int timeRemaining = this.plugin.params.getRoundTime() - this.currentRoundTime;
+                updateBossBar();
 
                 if (this.successfulPlayers == this.plugin.params.getAvailablePlayers().size()) {
                     Bukkit.broadcastMessage(ChatColor.GREEN + "Everyone Found their block!");
@@ -94,6 +113,8 @@ public class BlockShuffleTask extends BukkitRunnable {
     public synchronized void cancel() throws IllegalStateException {
         super.cancel();
         helper.endGame();
+        bossBar.setVisible(false);
+        bossBar.removeAll();
     }
 }
 
@@ -144,11 +165,16 @@ class BlockShuffleTaskHelper {
     }
 
     public boolean checkPlayer(BlockShufflePlayer player) {
+        if (Bukkit.getPlayer(player.getName()) == null) {
+            player.setHasFoundBlock(true);
+            return true;
+        }
         Material standingOn = Objects.requireNonNull(Bukkit.getPlayer(player.getName())).getLocation().getBlock().getRelative(BlockFace.DOWN).getType();
         if (standingOn.equals(player.getBlockToBeFound())) {
             player.setHasFoundBlock(true);
             player.setScore(player.getScore() + 1);
             broadcastSound(Sound.BLOCK_END_PORTAL_SPAWN);
+            player.player.playSound(player.player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
             return true;
         }
 
