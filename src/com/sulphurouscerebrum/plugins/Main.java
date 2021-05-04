@@ -80,7 +80,11 @@ public class Main extends JavaPlugin {
     }
 
     public boolean checkMaterialValidity(String material) {
+        /*for (Material mat : Material.values()) {
+            Bukkit.getLogger().info(mat.name());
+        }*/
         Material m = Material.getMaterial(material);
+        //Bukkit.getLogger().info(m.name());
         return m != null;
     }
 }

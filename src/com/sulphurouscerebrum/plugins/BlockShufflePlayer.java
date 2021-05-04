@@ -43,4 +43,8 @@ public class BlockShufflePlayer {
     public void setBlockToBeFound(Material blockToBeFound) {
         this.blockToBeFound = blockToBeFound;
     }
+
+    public void notifyFound() {
+        player.sendMessage("You've found your block!");
+    }
 }

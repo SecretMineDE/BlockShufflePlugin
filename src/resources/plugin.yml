@@ -1,5 +1,6 @@
 name: BlockShufflePlugin
 author: SulphurousC
+api-version: 1.14
 description: An implementation of the BlockShuffle minigame
 commands:
   blockshuffle:

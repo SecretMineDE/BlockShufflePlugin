@@ -30,6 +30,7 @@ public class BlockShuffleTabCompleter implements TabCompleter {
             list.add("remove");
             list.add("list");
             list.add("set");
+            list.add("addall");
 
             List<String> suggestions = new ArrayList<>();
             for(String a : list) {

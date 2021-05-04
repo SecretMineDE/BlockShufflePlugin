@@ -2,3 +2,6 @@
 .project
 .classpath
 bin
+/BlockShufflePlugin.iml
+/target/
+/.idea/

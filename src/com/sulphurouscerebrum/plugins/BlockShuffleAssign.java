@@ -16,12 +16,14 @@ public class BlockShuffleAssign {
 	
 	public void assignBlocks() {
 		
-		for(BlockShufflePlayer player : plugin.players) {
-			player.setCompleted(false);
+		for(BlockShufflePlayer player : plugin.params.getAvailablePlayers()) {
+			player.setHasFoundBlock(false);
 			Material assignedBlock = getRandomBlock();
-			player.setBlock(assignedBlock);
-			Player play = Bukkit.getPlayer(player.name);
-			play.sendMessage("Your block is : " + assignedBlock.name());
+			player.setBlockToBeFound(assignedBlock);
+			Player play = Bukkit.getPlayer(player.getName());
+			if (play != null) {
+				play.sendMessage("Your block is : " + assignedBlock.name());
+			}
 		}
 	}
 	
@@ -32,8 +34,8 @@ public class BlockShuffleAssign {
 		
 //		Generate random number and get it from list
 		while(assignedBlock == null) {
-			int randomNumber = rand.nextInt(plugin.availableBlocks.size());
-			Material m = Material.getMaterial(plugin.availableBlocks.get(randomNumber));
+			int randomNumber = rand.nextInt(plugin.params.getAvailableBlocks().size());
+			Material m = plugin.params.getAvailableBlocks().get(randomNumber);
 			assignedBlock = m;
 		}
 		return assignedBlock;
