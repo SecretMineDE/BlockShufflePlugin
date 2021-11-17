@@ -14,6 +14,7 @@ import org.bukkit.scoreboard.Scoreboard;
 
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class BlockShuffleTask extends BukkitRunnable {
@@ -134,6 +135,7 @@ public class BlockShuffleTask extends BukkitRunnable {
                     this.currentRoundTime += 10;
                 }
 
+
                 if (this.hasRoundEnded && this.currentRound == this.plugin.params.getNoOfRounds()) {
                     this.cancel();
                 }
@@ -241,31 +243,42 @@ class BlockShuffleTaskHelper {
         }
     }
 
+    public void printScores() {
+        Map<String, Integer> scores = new HashMap<>();
+        for (BlockShufflePlayer player : this.plugin.params.getAvailablePlayers()) {
+            Player ply = Bukkit.getPlayer(player.getName());
+            if (ply == null)
+                continue;
+            scores.put(player.getName(), player.getScore());
+        }
+        Map<String, Integer> sorted =
+                scores.entrySet().stream()
+                        .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+
+
+        //Output
+        Bukkit.broadcastMessage("\nBlockShuffle Scores: \n");
+        for (Map.Entry<String, Integer> mapEntry : scores.entrySet()) {
+            String message = ChatColor.BLUE + mapEntry.getKey() + ": " + ChatColor.GREEN + mapEntry.getValue() + " Points";
+            Bukkit.broadcastMessage(message);
+        }
+    }
+
     public void endGame() {
         SendTitle titleSender = new SendTitle();
-        Bukkit.broadcastMessage("\nScores: \n");
         broadcastSound(Sound.UI_TOAST_CHALLENGE_COMPLETE);
-        TreeMap<Integer, String> scoresOld = new TreeMap<>(Collections.reverseOrder());
-        Map<String, Integer> scores = new HashMap<>();
 
         for (BlockShufflePlayer player : this.plugin.params.getAvailablePlayers()) {
             Player ply = Bukkit.getPlayer(player.getName());
             if (ply == null)
                 continue;
-
-            scoresOld.put(player.getScore(), player.getName());
-            scores.put(player.getName(), player.getScore());
             ply.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
             titleSender.sendTitle(ply, 10, 30, 10, ChatColor.RED + "" + "Game Over", "");
         }
 
-        Stream<Map.Entry<String, Integer>> sorted = scores.entrySet().stream()
-                .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
-
-        for (Map.Entry<String, Integer> integerStringEntry : scores.entrySet()) {
-            String message = ChatColor.BLUE + integerStringEntry.getKey() + ": " + ChatColor.GREEN + integerStringEntry.getValue() + " Points";
-            Bukkit.broadcastMessage(message);
-        }
+        printScores();
         this.plugin.params.setGameRunning(false);
     }
 }
