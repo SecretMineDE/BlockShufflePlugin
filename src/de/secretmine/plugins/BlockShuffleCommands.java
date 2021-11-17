@@ -1,6 +1,7 @@
-package com.sulphurouscerebrum.plugins;
+package de.secretmine.plugins;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.command.Command;
@@ -33,10 +34,13 @@ public class BlockShuffleCommands implements CommandExecutor {
                 return helper.stopGame();
             } else if (args[0].equalsIgnoreCase("info")) {
                 return helper.getInfo();
+            } else if (args[0].equalsIgnoreCase("skipround")) {
+                return helper.skipRound();
             } else if (args[0].equalsIgnoreCase("addall")) {
                 return helper.addAllPlayers();
             } else if (args[0].equalsIgnoreCase("add")) {
-                if (args.length > 1) return helper.addPlayer(args[1]);
+                if (args.length == 2) return helper.addPlayer(args[1], false);
+                else if (args.length == 3) return helper.addPlayer(args[1], true);
                 else return false;
             } else if (args[0].equalsIgnoreCase("remove")) {
                 if (args.length > 1) return helper.removePlayer(args[1]);
@@ -46,7 +50,8 @@ public class BlockShuffleCommands implements CommandExecutor {
             } else if (args[0].equalsIgnoreCase("set")) {
                 if (args.length > 1) {
                     if (args[1].equalsIgnoreCase("noOfRounds")) {
-                        if (args.length > 2) return helper.setRounds(args[2]);
+                        if (args.length == 3) return helper.setRounds(args[2], false);
+                        else if (args.length == 4) return helper.setRounds(args[2], true);
                         else return false;
                     } else if (args[1].equalsIgnoreCase("roundTime")) {
                         if (args.length > 2) return helper.setRoundTime(args[2]);
@@ -65,10 +70,17 @@ public class BlockShuffleCommands implements CommandExecutor {
 class BlockShuffleCommandsHelper {
     Main plugin;
     CommandSender sender;
+    BlockShuffleTask blockShuffleTask;
 
     public BlockShuffleCommandsHelper(Main plugin, CommandSender sender) {
         this.plugin = plugin;
         this.sender = sender;
+    }
+
+    public boolean skipRound() {
+        if (this.blockShuffleTask != null)
+            this.blockShuffleTask.currentRoundTime = 0;
+        return true;
     }
 
     public boolean startGame() {
@@ -89,7 +101,10 @@ class BlockShuffleCommandsHelper {
             player.player.getInventory().clear();
             player.player.getInventory().addItem(new ItemStack(Material.COOKED_BEEF, this.plugin.params.getInitialFoodAmount()));
         }
-        BukkitTask task = new BlockShuffleTask(this.plugin).runTaskTimer(plugin, 0, 10);
+        float timeMinutes = (float) this.plugin.params.getRoundTime() / 20 / 60;
+        Bukkit.broadcastMessage("Round time: " + ChatColor.BOLD + "" + Math.round(timeMinutes) + " min");
+        blockShuffleTask = new BlockShuffleTask(this.plugin);
+        BukkitTask task = blockShuffleTask.runTaskTimer(plugin, 0, 10);
         this.plugin.params.setTask(task);
         this.plugin.params.setGameRunning(true);
 
@@ -103,12 +118,13 @@ class BlockShuffleCommandsHelper {
 
             for (BlockShufflePlayer player : this.plugin.params.getAvailablePlayers()) {
                 Player ply = Bukkit.getPlayer(player.getName());
-                if (ply != null) {
+                if (ply != null && Bukkit.getScoreboardManager() != null) {
                     ply.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
                 }
             }
 
             this.plugin.params.setGameRunning(false);
+            this.blockShuffleTask = null;
         } else {
             this.sender.sendMessage("No Games Running!");
         }
@@ -122,8 +138,8 @@ class BlockShuffleCommandsHelper {
         return true;
     }
 
-    public boolean addPlayer(String playerString) {
-        if (this.plugin.params.getIsGameRunning()) {
+    public boolean addPlayer(String playerString, boolean force) {
+        if (this.plugin.params.getIsGameRunning() && !force) {
             sender.sendMessage("Cannot Add Players during game!");
             return true;
         }
@@ -145,7 +161,7 @@ class BlockShuffleCommandsHelper {
             return true;
         }
         Collection<? extends Player> players = Bukkit.getOnlinePlayers();
-        for (Player player: players) {
+        for (Player player : players) {
             String playerString = player.getName();
             boolean wasAdded = this.plugin.params.addAvailablePlayer(playerString);
             if (wasAdded) this.sender.sendMessage("Added player : " + playerString);
@@ -179,7 +195,7 @@ class BlockShuffleCommandsHelper {
         return true;
     }
 
-    public boolean setRounds(String numberOfRoundsString) {
+    public boolean setRounds(String numberOfRoundsString, boolean force) {
         int noOfRounds;
 
         try {
@@ -193,7 +209,7 @@ class BlockShuffleCommandsHelper {
         } else if (noOfRounds > 10000) {
             this.sender.sendMessage("Bruh. Get a life");
         } else {
-            if (this.plugin.params.getIsGameRunning()) {
+            if (this.plugin.params.getIsGameRunning() && !force) {
                 sender.sendMessage("Game is running! Cannot modify parameters during game");
             } else {
                 this.plugin.params.setNoOfRounds(noOfRounds);

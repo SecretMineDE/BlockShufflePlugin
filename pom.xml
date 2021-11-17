@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.sulphurouscerebrum.plugins</groupId>
+    <groupId>de.secretmine.plugins</groupId>
     <artifactId>BlockShuffle</artifactId>
     <!-- Version is used in plugin.yml -->
     <version>0.1-SNAPSHOT</version>
@@ -10,7 +10,7 @@
     <!-- Plugin Information -->
     <!-- Name, Description, and URL are used in plugin.yml -->
     <name>BlockShufflePlugin</name>
-    <description>Example of a Spigot plugin using Maven</description>
+    <description>BlockShuffle-Plugin</description>
     <url>https://github.com/SecretMineDE/BlockShufflePlugin</url>
 
     <licenses>
@@ -42,8 +42,8 @@
 
     <properties>
         <!--  Author and MainClass are used in plugin.yml -->
-        <author>SGray</author>
-        <mainClass>com.sulphurouscerebrum.plugins.Main</mainClass>
+        <author>SecretMineDE</author>
+        <mainClass>de.secretmine.plugins.Main</mainClass>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -95,6 +95,14 @@
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
                 </configuration>
             </plugin>
         </plugins>

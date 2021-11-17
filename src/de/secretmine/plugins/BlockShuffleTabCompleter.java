@@ -1,4 +1,4 @@
-package com.sulphurouscerebrum.plugins;
+package de.secretmine.plugins;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -31,6 +31,7 @@ public class BlockShuffleTabCompleter implements TabCompleter {
             list.add("list");
             list.add("set");
             list.add("addall");
+            list.add("skipRound");
 
             List<String> suggestions = new ArrayList<>();
             for(String a : list) {

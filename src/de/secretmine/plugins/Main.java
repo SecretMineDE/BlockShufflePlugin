@@ -1,5 +1,6 @@
-package com.sulphurouscerebrum.plugins;
+package de.secretmine.plugins;
 
+import jdk.nashorn.internal.ir.Block;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -23,7 +24,7 @@ public class Main extends JavaPlugin {
     }
 
     public void onDisable(){
-
+        BlockShuffleTask.removeBossbarIfExists();
     }
 
     public void loadConfigFile() {

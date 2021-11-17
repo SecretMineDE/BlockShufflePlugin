@@ -1,4 +1,4 @@
-package com.sulphurouscerebrum.plugins;
+package de.secretmine.plugins;
 
 import org.bukkit.*;
 import org.bukkit.block.BlockFace;
@@ -14,6 +14,7 @@ import org.bukkit.scoreboard.Scoreboard;
 
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 public class BlockShuffleTask extends BukkitRunnable {
     Logger logger;
@@ -38,7 +39,7 @@ public class BlockShuffleTask extends BukkitRunnable {
         this.titleSender = new SendTitle();
         this.helper = new BlockShuffleTaskHelper(this.plugin, this.currentRound);
         if (bossBar == null)
-            bossBar = Bukkit.getServer().createBossBar("BlockShuffle", BarColor.BLUE, BarStyle.SOLID);
+            bossBar = Bukkit.getServer().createBossBar("BlockShuffle", BarColor.YELLOW, BarStyle.SEGMENTED_10);
     }
 
     private void updateBossBar() {
@@ -46,6 +47,11 @@ public class BlockShuffleTask extends BukkitRunnable {
         if (currentRoundTime > 0)
             progress = 1.0 - (float) currentRoundTime / (float) this.plugin.params.getRoundTime();
         bossBar.setProgress(progress);
+    }
+
+    public static void removeBossbarIfExists() {
+        if (bossBar != null)
+            bossBar.removeAll();
     }
 
     @Override
@@ -63,12 +69,12 @@ public class BlockShuffleTask extends BukkitRunnable {
         } else {
             if (hasRoundEnded) {
                 this.currentRound += 1;
-                Bukkit.broadcastMessage("Starting Round : " + ChatColor.BOLD + "" + this.currentRound);
+                Bukkit.broadcastMessage("Starting Round: " + ChatColor.BOLD + "" + this.currentRound);
                 this.currentRoundTime = 0;
                 this.hasRoundEnded = false;
                 this.successfulPlayers = 0;
                 helper.startRound(this.currentRound);
-                this.bossBar.setVisible(true);
+                bossBar.setVisible(true);
                 updateBossBar();
             } else {
                 for (BlockShufflePlayer player : this.plugin.params.getAvailablePlayers()) {
@@ -156,14 +162,23 @@ class BlockShuffleTaskHelper {
 
         Score s1 = obj.getScore("Round: " + this.currentRound + "/" + this.plugin.params.getNoOfRounds());
         s1.setScore(5);
-        Score s2 = obj.getScore("");
-        s2.setScore(4);
-        Score s3 = obj.getScore("Your score: " + player.getScore());
-        s3.setScore(3);
+
+        Score s3 = obj.getScore("Score: " + player.getScore());
+        s3.setScore(4);
+
         Score s4 = obj.getScore("");
-        s4.setScore(2);
-        Score s5 = obj.getScore("Your block: " + player.getBlockToBeFound());
-        s5.setScore(1);
+        s4.setScore(3);
+
+        String s6Text = player.getBlockToBeFound().toString();
+        if (player.hasFoundBlock)
+            s6Text = s6Text + " ✔";
+
+        Score s5 = obj.getScore("Block:");
+        s5.setScore(2);
+
+        Score s6 = obj.getScore(s6Text);
+        s6.setScore(1);
+
 
         player.player.setScoreboard(scoreboard);
     }
@@ -177,13 +192,21 @@ class BlockShuffleTaskHelper {
         if (standingOn.equals(player.getBlockToBeFound())) {
             player.setHasFoundBlock(true);
             player.setScore(player.getScore() + 1);
-            broadcastSound(Sound.BLOCK_END_PORTAL_SPAWN);
+            broadcastSoundToEveryoneBut(Sound.BLOCK_END_PORTAL_SPAWN, player.player);
             player.player.playSound(player.player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
             Bukkit.broadcastMessage(ChatColor.GREEN + player.getName() + " has found their block!");
             return true;
         }
 
         return false;
+    }
+
+    public void broadcastSoundToEveryoneBut(Sound sound, Player removePlayer) {
+        for (BlockShufflePlayer player : this.plugin.params.getAvailablePlayers()) {
+            if (player.player == removePlayer)
+                continue;
+            player.player.playSound(player.player.getLocation(), sound, 1.0f, 1.0f);
+        }
     }
 
     public void broadcastSound(Sound sound) {
@@ -194,23 +217,27 @@ class BlockShuffleTaskHelper {
 
     public void endGame() {
         SendTitle titleSender = new SendTitle();
-        Bukkit.broadcastMessage("\nScores : \n");
+        Bukkit.broadcastMessage("\nScores: \n");
         broadcastSound(Sound.UI_TOAST_CHALLENGE_COMPLETE);
-        TreeMap<Integer, String> scores = new TreeMap<>(Collections.reverseOrder());
+        TreeMap<Integer, String> scoresOld = new TreeMap<>(Collections.reverseOrder());
+        Map<String, Integer> scores = new HashMap<>();
 
         for (BlockShufflePlayer player : this.plugin.params.getAvailablePlayers()) {
             Player ply = Bukkit.getPlayer(player.getName());
             if (ply == null)
                 continue;
 
-            scores.put(player.getScore(), player.getName());
+            scoresOld.put(player.getScore(), player.getName());
+            scores.put(player.getName(), player.getScore());
             ply.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
             titleSender.sendTitle(ply, 10, 30, 10, ChatColor.RED + "" + "Game Over", "");
         }
 
-        for (Map.Entry<Integer, String> integerStringEntry : scores.entrySet()) {
-            Map.Entry mapEntry = (Map.Entry) integerStringEntry;
-            String message = mapEntry.getValue() + " : " + mapEntry.getKey();
+        Stream<Map.Entry<String, Integer>> sorted = scores.entrySet().stream()
+                .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
+
+        for (Map.Entry<String, Integer> integerStringEntry : scores.entrySet()) {
+            String message = ChatColor.BLUE + integerStringEntry.getKey() + ": " + ChatColor.GREEN + integerStringEntry.getValue() + " Points";
             Bukkit.broadcastMessage(message);
         }
         this.plugin.params.setGameRunning(false);

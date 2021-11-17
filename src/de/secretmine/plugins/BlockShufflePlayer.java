@@ -1,4 +1,4 @@
-package com.sulphurouscerebrum.plugins;
+package de.secretmine.plugins;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
