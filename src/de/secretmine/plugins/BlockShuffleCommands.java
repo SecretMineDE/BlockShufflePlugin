@@ -62,6 +62,8 @@ public class BlockShuffleCommands implements CommandExecutor {
                     }
                 } else return false;
             } else return false;
+        } else if (label.equalsIgnoreCase("giveup")) {
+            return helper.giveUp();
         }
         return false;
     }
@@ -78,8 +80,35 @@ class BlockShuffleCommandsHelper {
     }
 
     public boolean skipRound() {
-        if (this.blockShuffleTask != null)
-            this.blockShuffleTask.currentRoundTime = 0;
+        if (!this.plugin.params.getIsGameRunning()) {
+            this.sender.sendMessage("Game is not running.");
+            return true;
+        }
+        for (BlockShufflePlayer player : plugin.params.getAvailablePlayers()) {
+            if (!player.roundHasEndedForPlayer())
+                player.setHasGivenUp(true);
+        }
+        return true;
+    }
+
+    public boolean giveUp() {
+        if (!(sender instanceof Player)) {
+            this.sender.sendMessage("Command can only be used as player");
+            return true;
+        }
+        if (!this.plugin.params.getIsGameRunning()) {
+            this.sender.sendMessage("Game is not running.");
+            return true;
+        }
+        Player p = (Player) sender;
+        for (BlockShufflePlayer player : plugin.params.getAvailablePlayers()) {
+            if (player.player.getUniqueId() == p.getUniqueId()) {
+                this.sender.sendMessage("You have given up this round.");
+                player.setHasGivenUp(true);
+                return true;
+            }
+        }
+        this.sender.sendMessage("You are not part of a running game.");
         return true;
     }
 

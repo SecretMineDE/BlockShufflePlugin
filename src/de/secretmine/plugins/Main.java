@@ -15,6 +15,7 @@ public class Main extends JavaPlugin {
 
     public void onEnable(){
         Objects.requireNonNull(getCommand("blockshuffle")).setExecutor(new BlockShuffleCommands(this));
+        Objects.requireNonNull(getCommand("giveup")).setExecutor(new BlockShuffleCommands(this));
         Objects.requireNonNull(getCommand("blockshuffle")).setTabCompleter(new BlockShuffleTabCompleter(this));
 
         saveDefaultConfig();

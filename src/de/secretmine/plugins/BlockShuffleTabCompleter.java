@@ -13,6 +13,7 @@ import java.util.List;
 public class BlockShuffleTabCompleter implements TabCompleter {
 
     Main plugin;
+
     public BlockShuffleTabCompleter(Main plugin) {
         this.plugin = plugin;
     }
@@ -22,7 +23,7 @@ public class BlockShuffleTabCompleter implements TabCompleter {
 
         List<String> list = new ArrayList<>();
 
-        if(args.length == 1) {
+        if (args.length == 1) {
             list.add("start");
             list.add("stop");
             list.add("info");
@@ -34,48 +35,42 @@ public class BlockShuffleTabCompleter implements TabCompleter {
             list.add("skipRound");
 
             List<String> suggestions = new ArrayList<>();
-            for(String a : list) {
-                if(a.toLowerCase().startsWith(args[0].toLowerCase())){
+            for (String a : list) {
+                if (a.toLowerCase().startsWith(args[0].toLowerCase())) {
                     suggestions.add(a);
                 }
             }
 
             return suggestions;
-        }
-
-        else if(args.length == 2) {
+        } else if (args.length == 2) {
 
             List<String> suggestions = new ArrayList<>();
 
-            if(args[0].equalsIgnoreCase("add")) {
-                for(Player p : Bukkit.getOnlinePlayers()){
+            if (args[0].equalsIgnoreCase("add")) {
+                for (Player p : Bukkit.getOnlinePlayers()) {
                     list.add(p.getName());
                 }
 
-                for(String a : list) {
-                    if(a.toLowerCase().startsWith((args[1].toLowerCase()))) suggestions.add(a);
+                for (String a : list) {
+                    if (a.toLowerCase().startsWith((args[1].toLowerCase()))) suggestions.add(a);
                 }
                 return suggestions;
-            }
-
-            else if(args[0].equalsIgnoreCase("remove")) {
-                for(BlockShufflePlayer p : this.plugin.params.getAvailablePlayers()){
+            } else if (args[0].equalsIgnoreCase("remove")) {
+                for (BlockShufflePlayer p : this.plugin.params.getAvailablePlayers()) {
                     list.add(p.getName());
                 }
 
-                for(String a : list) {
-                    if(a.toLowerCase().startsWith((args[1].toLowerCase()))) suggestions.add(a);
+                for (String a : list) {
+                    if (a.toLowerCase().startsWith((args[1].toLowerCase()))) suggestions.add(a);
                 }
                 return suggestions;
-            }
-
-            else if(args[0].equalsIgnoreCase(("set"))) {
+            } else if (args[0].equalsIgnoreCase(("set"))) {
                 list.add("noOfRounds");
                 list.add("roundTime");
                 list.add("foodAmount");
 
-                for(String a : list) {
-                    if(a.toLowerCase().startsWith(args[1].toLowerCase())) suggestions.add(a);
+                for (String a : list) {
+                    if (a.toLowerCase().startsWith(args[1].toLowerCase())) suggestions.add(a);
                 }
 
                 return suggestions;

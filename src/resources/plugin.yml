@@ -6,5 +6,8 @@ commands:
   blockshuffle:
     description: BlockShuffle Main Command
     usage: "Usage : /blockshuffle [start][stop][info][add][remove][list][set [noOfRounds][RoundTime][foodAmount]]"
+  giveup:
+    description: Forces you to loose the current round if you are not able to find your block
+    usage: "Usage: /giveup"
 version: 2.3
 main: de.secretmine.plugins.Main

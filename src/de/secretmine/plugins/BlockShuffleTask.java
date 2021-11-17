@@ -23,10 +23,11 @@ public class BlockShuffleTask extends BukkitRunnable {
     BlockShuffleTaskHelper helper;
     int currentRoundTime;
     int currentRound;
-    int successfulPlayers;
+    List<BlockShufflePlayer> players;
     int counter;
     SendTitle titleSender;
     static BossBar bossBar;
+
 
     public BlockShuffleTask(Main plugin) {
         this.logger = Bukkit.getLogger();
@@ -34,12 +35,12 @@ public class BlockShuffleTask extends BukkitRunnable {
         this.hasRoundEnded = true;
         this.currentRoundTime = 0;
         this.currentRound = 0;
-        this.successfulPlayers = 0;
         this.counter = 100;
         this.titleSender = new SendTitle();
         this.helper = new BlockShuffleTaskHelper(this.plugin, this.currentRound);
         if (bossBar == null)
             bossBar = Bukkit.getServer().createBossBar("BlockShuffle", BarColor.YELLOW, BarStyle.SEGMENTED_10);
+        this.players = this.plugin.params.getAvailablePlayers();
     }
 
     private void updateBossBar() {
@@ -52,6 +53,31 @@ public class BlockShuffleTask extends BukkitRunnable {
     public static void removeBossbarIfExists() {
         if (bossBar != null)
             bossBar.removeAll();
+    }
+
+    private boolean allPlayersFoundOrGivenUp() {
+        for (BlockShufflePlayer player : players) {
+            if (!player.isHasGivenUp() && !player.getHasFoundBlock()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private int getFinishedPlayerCount() {
+        int count = 0;
+        for (BlockShufflePlayer player : players) {
+            if (player.isHasGivenUp() || player.getHasFoundBlock()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private void resetAllPlayerStatus() {
+        for (BlockShufflePlayer player : players) {
+            player.resetBeginningOfRound();
+        }
     }
 
     @Override
@@ -72,29 +98,29 @@ public class BlockShuffleTask extends BukkitRunnable {
                 Bukkit.broadcastMessage("Starting Round: " + ChatColor.BOLD + "" + this.currentRound);
                 this.currentRoundTime = 0;
                 this.hasRoundEnded = false;
-                this.successfulPlayers = 0;
+                resetAllPlayerStatus();
                 helper.startRound(this.currentRound);
                 bossBar.setVisible(true);
                 updateBossBar();
             } else {
                 for (BlockShufflePlayer player : this.plugin.params.getAvailablePlayers()) {
-                    if (!player.getHasFoundBlock()) {
+                    if (!player.roundHasEndedForPlayer()) {
                         boolean hasFound = helper.checkPlayer(player);
                         if (hasFound) {
-                            this.successfulPlayers++;
+                            player.setHasFoundBlock(true);
                             //player.notifyFound();
                             helper.updateBoard(player);
                         }
                     }
                 }
 
-                String bossBarTitle = this.successfulPlayers + " / " + this.plugin.params.getAvailablePlayers().size() + " players finished";
+                String bossBarTitle = getFinishedPlayerCount() + " / " + this.plugin.params.getAvailablePlayers().size() + " players finished";
                 bossBar.setTitle(bossBarTitle);
 
                 int timeRemaining = this.plugin.params.getRoundTime() - this.currentRoundTime;
                 updateBossBar();
 
-                if (this.successfulPlayers == this.plugin.params.getAvailablePlayers().size()) {
+                if (allPlayersFoundOrGivenUp()) {
                     Bukkit.broadcastMessage(ChatColor.GREEN + "Everyone Found their block!");
                     this.hasRoundEnded = true;
                 } else if (timeRemaining <= 0) {
